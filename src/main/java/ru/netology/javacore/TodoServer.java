@@ -11,8 +11,8 @@ import java.net.Socket;
 
 public class TodoServer {
 
-    int port;
-    Todos todos;
+    private int port;
+    private Todos todos;
 
     public TodoServer(int port, Todos todos) {
         this.port = port;
@@ -21,22 +21,24 @@ public class TodoServer {
 
     public void start() throws IOException {
 
-        ServerSocket serverSocket = new ServerSocket(port);
-        Socket clientSocket = serverSocket.accept();
-        PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
-        BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-        Gson gson = new Gson();
-        Message message = gson.fromJson(in.readLine(), Message.class);
-        if (message.getType().equals("ADD")) {
-            todos.addTask(message.getTask());
-        } else {
-            todos.removeTask(message.getTask());
+        while (true) {
+
+            try (
+                    ServerSocket serverSocket = new ServerSocket(port);
+                    Socket clientSocket = serverSocket.accept();
+                    PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+                    BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()))
+            ) {
+                Gson gson = new Gson();
+                Message message = gson.fromJson(in.readLine(), Message.class);
+                if (message.getType().equals("ADD")) {
+                    todos.addTask(message.getTask());
+                } else {
+                    todos.removeTask(message.getTask());
+                }
+                out.println(todos.getAllTasks());
+            }
         }
-        out.println(todos.getAllTasks());
-        in.close();
-        out.close();
-        clientSocket.close();
-        serverSocket.close();
 
     }
 
